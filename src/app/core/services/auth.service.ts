@@ -1,4 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { SupabaseService } from './supabase.service';
 
 export interface UserProfile {
@@ -18,7 +19,7 @@ export class AuthService {
   // Expose as a computed value for template bindings.
   user = computed(() => this.userSignal());
 
-  constructor(private supabase: SupabaseService) {
+  constructor(private supabase: SupabaseService, private router: Router) {
     // Check initial session
     this.supabase.client.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -27,9 +28,26 @@ export class AuthService {
     });
 
     // Listen for auth changes
-    this.supabase.client.auth.onAuthStateChange((_event, session) => {
+    this.supabase.client.auth.onAuthStateChange((event, session) => {
       if (session) {
         this.fetchProfile(session.user);
+
+        // Check if the user just arrived from an email confirmation link
+        if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
+          const search = window.location.search;
+          const hash = window.location.hash;
+          
+          if (search.includes('code=') || hash.includes('type=signup') || hash.includes('type=recovery') || hash.includes('access_token=')) {
+            // Give the UI a tiny moment to render before blocking with alert
+            setTimeout(() => {
+              alert('Email confirmed successfully! You are now logged in.');
+              this.router.navigate(['/dashboard']);
+            }, 100);
+            
+            // Clean up the URL so refreshing doesn't trigger the alert again
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
       } else {
         this.userSignal.set(null);
       }
@@ -63,8 +81,7 @@ export class AuthService {
   }
 
   async register(name: string, email: string, password?: string) {
-    // If no password is provided in demo, fallback to a default
-    if (!password) password = 'SecureDemo2026!';
+    if (!password) throw new Error('Password is required');
     
     const { data, error } = await this.supabase.client.auth.signUp({
       email,
@@ -79,7 +96,7 @@ export class AuthService {
   }
 
   async login(email: string, password?: string) {
-    if (!password) password = 'SecureDemo2026!';
+    if (!password) throw new Error('Password is required');
     
     const { data, error } = await this.supabase.client.auth.signInWithPassword({
       email,

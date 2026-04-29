@@ -1,19 +1,56 @@
 import { TestBed } from '@angular/core/testing';
-import { AuthService, UserProfile } from './auth.service';
+import { AuthService } from './auth.service';
+import { SupabaseService } from './supabase.service';
 
 describe('AuthService', () => {
   let service: AuthService;
 
-  beforeEach(() => {
-    // Clear localStorage before each test
-    localStorage.clear();
+  const mockSupabaseClient = {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null } }),
+      onAuthStateChange: () => {},
+      signUp: () => Promise.resolve({ 
+        data: { user: { id: '1', email: 'test@example.com', user_metadata: { name: 'Test User' } } }, 
+        error: null 
+      }),
+      signInWithPassword: () => Promise.resolve({ 
+        data: { user: { id: '1', email: 'test@example.com' } }, 
+        error: null 
+      }),
+      signOut: () => Promise.resolve({ error: null }),
+      updateUser: () => Promise.resolve({ error: null })
+    },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: () => Promise.resolve({ data: null, error: null })
+        })
+      }),
+      update: () => ({
+        eq: () => Promise.resolve({ error: null })
+      })
+    }),
+    rpc: () => Promise.resolve({ error: null })
+  };
 
-    TestBed.configureTestingModule({});
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { 
+          provide: SupabaseService, 
+          useValue: { client: mockSupabaseClient } 
+        }
+      ]
+    });
     service = TestBed.inject(AuthService);
   });
 
   afterEach(() => {
-    localStorage.clear();
+    mockSupabaseClient.auth.signInWithPassword = () => Promise.resolve({ 
+      data: { user: { id: '1', email: 'test@example.com' } }, 
+      error: null 
+    });
   });
 
   it('should be created', () => {
@@ -29,76 +66,43 @@ describe('AuthService', () => {
     const result = await service.register('Test User', 'test@example.com', 'password123');
 
     expect(result.user).toBeTruthy();
-    expect(result.user.name).toBe('Test User');
-    expect(result.user.email).toBe('test@example.com');
-    expect(result.user.avatar).toBe('T');
-    expect(service.isLoggedIn()).toBe(true);
-    expect(service.user()?.name).toBe('Test User');
-  });
-
-  it('should persist registered user to localStorage', async () => {
-    await service.register('Test User', 'test@example.com', 'password123');
-
-    const stored = JSON.parse(localStorage.getItem('demo_user') || 'null');
-    expect(stored).toBeTruthy();
-    expect(stored.email).toBe('test@example.com');
+    expect(result.user?.user_metadata?.['name']).toBe('Test User');
+    expect(result.user?.email).toBe('test@example.com');
   });
 
   it('should login with valid credentials', async () => {
-    await service.register('Test User', 'test@example.com', 'password123');
-    await service.logout();
-    expect(service.isLoggedIn()).toBe(false);
-
     const result = await service.login('test@example.com', 'password123');
-    expect(result.user.email).toBe('test@example.com');
-    expect(service.isLoggedIn()).toBe(true);
+    expect(result.user?.email).toBe('test@example.com');
   });
 
   it('should throw error on invalid login', async () => {
-    await service.register('Test User', 'test@example.com', 'password123');
-    await service.logout();
+    mockSupabaseClient.auth.signInWithPassword = () => Promise.resolve({
+      data: { user: null, session: null } as any,
+      error: new Error('Invalid email or password') as any
+    });
 
     await expect(service.login('wrong@example.com', 'password123'))
       .rejects.toThrow('Invalid email or password');
   });
 
   it('should logout successfully', async () => {
-    await service.register('Test User', 'test@example.com', 'password123');
+    // Pre-set user
+    (service as any).userSignal.set({ id: '1', name: 'Test User', email: 'test@example.com' });
     expect(service.isLoggedIn()).toBe(true);
 
     await service.logout();
+    
     expect(service.isLoggedIn()).toBe(false);
     expect(service.user()).toBeNull();
-    expect(localStorage.getItem('demo_user')).toBeNull();
   });
 
   it('should update profile name', async () => {
-    await service.register('Old Name', 'test@example.com', 'password123');
+    (service as any).userSignal.set({ id: '1', name: 'Old Name', email: 'test@example.com' });
     await service.updateProfile('New Name');
-
     expect(service.user()?.name).toBe('New Name');
   });
 
   it('should update password', async () => {
-    await service.register('Test User', 'test@example.com', 'oldpass');
-    await service.updatePassword('newpass');
-
-    // Verify by logging out and back in with new password
-    await service.logout();
-    const result = await service.login('test@example.com', 'newpass');
-    expect(result.user.email).toBe('test@example.com');
-  });
-
-  it('should restore user session from localStorage on init', async () => {
-    // Pre-populate localStorage
-    const mockUser: UserProfile = { name: 'Saved User', email: 'saved@test.com', avatar: 'S' };
-    localStorage.setItem('demo_user', JSON.stringify(mockUser));
-    localStorage.setItem('demo_users', JSON.stringify([mockUser]));
-
-    // Create a new service instance — it should pick up the saved user
-    const freshService = TestBed.inject(AuthService);
-    // Since it's singleton in 'root', we need to verify loadUser logic directly
-    // The service initializes userSignal with loadUser() in the field initializer
-    expect(freshService).toBeTruthy();
+    await expect(service.updatePassword('newpass')).resolves.toBeUndefined();
   });
 });

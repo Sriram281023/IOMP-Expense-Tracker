@@ -119,6 +119,14 @@ export class AnalyticsComponent implements AfterViewInit {
     return totals;
   }
 
+  private getTextColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--text-200').trim() || '#C8D0E8';
+  }
+
+  private getGridColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(255,255,255,0.06)';
+  }
+
   private drawLineChart(expenses: Expense[]) {
     const canvas = this.lineChartRef.nativeElement;
     const ctx = canvas.getContext('2d');
@@ -144,13 +152,16 @@ export class AnalyticsComponent implements AfterViewInit {
     const chartW = W - padL - padR, chartH = H - padT - padB;
     const maxVal = Math.max(...data, 1);
 
+    const textColor = this.getTextColor();
+    const gridColor = this.getGridColor();
+
     // Grid
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
       const y = padT + chartH * (1 - i / 4);
       ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
-      ctx.fillStyle = 'rgba(138,150,184,0.8)';
+      ctx.fillStyle = textColor;
       ctx.font = '11px DM Sans,sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(`${this.expenseService.currencySymbol()}${Math.round(maxVal * i / 4)}`, padL - 10, y + 4);
@@ -181,7 +192,7 @@ export class AnalyticsComponent implements AfterViewInit {
     pts.forEach((p, i) => {
       ctx.fillStyle = '#00C896';
       ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillStyle = textColor;
       ctx.font = '10px DM Sans,sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(months[i].label, p.x, H - padB + 16);
@@ -205,6 +216,8 @@ export class AnalyticsComponent implements AfterViewInit {
     const cx = 100, cy = 110, r = 80, ri = 40;
     let angle = -Math.PI / 2;
 
+    const textColor = this.getTextColor();
+
     entries.forEach(([cat, val], i) => {
       const slice = (val / total) * Math.PI * 2;
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, angle, angle + slice);
@@ -216,7 +229,7 @@ export class AnalyticsComponent implements AfterViewInit {
       const lx = 200, ly = 40 + i * 25;
       ctx.fillStyle = colors[i % colors.length];
       ctx.beginPath(); ctx.roundRect(lx, ly, 12, 12, 3); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fillStyle = textColor;
       ctx.font = '11px DM Sans,sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText(cat.slice(0,12), lx + 20, ly + 10);
@@ -245,6 +258,8 @@ export class AnalyticsComponent implements AfterViewInit {
       const maxVal = Math.max(...entries.map(([,v])=>v), 1);
       const barW = (chartW / entries.length) - 20;
 
+      const textColor = this.getTextColor();
+
       entries.forEach(([cat, val], i) => {
           const barH = (val / maxVal) * chartH;
           const x = padL + i * (chartW / entries.length) + 10;
@@ -256,7 +271,7 @@ export class AnalyticsComponent implements AfterViewInit {
           ctx.fillStyle = grad;
           ctx.beginPath(); ctx.roundRect(x, y, barW, barH, 4); ctx.fill();
 
-          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.fillStyle = textColor;
           ctx.font = '10px DM Sans,sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText(cat.split(' ')[0], x + barW/2, H - padB + 15);

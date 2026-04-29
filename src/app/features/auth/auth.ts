@@ -27,12 +27,12 @@ import { AuthService } from '../../core/services/auth.service';
 
           <div class="form-group" [style.margin-bottom.px]="20">
             <label>Email Address</label>
-            <input type="email" [(ngModel)]="email" class="form-control" placeholder="demo@example.com">
+            <input type="email" [(ngModel)]="email" class="form-control" autocomplete="off" placeholder="Enter your email">
           </div>
 
           <div class="form-group">
             <label>Password</label>
-            <input type="password" [(ngModel)]="password" class="form-control" placeholder="••••••••">
+            <input type="password" [(ngModel)]="password" class="form-control" autocomplete="new-password" placeholder="Enter your password">
           </div>
 
           <button (click)="onSubmit()" class="btn btn-primary" style="margin-top: 10px;">
@@ -42,10 +42,6 @@ import { AuthService } from '../../core/services/auth.service';
           <div class="auth-link">
             {{ isLogin ? "Don't have an account?" : "Already have an account?" }}
             <a (click)="isLogin = !isLogin">{{ isLogin ? 'Sign up' : 'Login' }}</a>
-          </div>
-
-          <div *ngIf="isLogin" class="demo-box">
-             <p>Demo: <span>demo@example.com</span> / <span>SecureDemo2026!</span></p>
           </div>
         </div>
       </div>
@@ -111,13 +107,6 @@ import { AuthService } from '../../core/services/auth.service';
       padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.85rem;
     }
     .alert-error { background: var(--danger-dim); border: 1px solid rgba(255,94,120,0.3); color: var(--danger); }
-    .demo-box {
-      margin-top: 24px; padding: 12px;
-      background: rgba(0, 200, 150, 0.05);
-      border: 1px solid rgba(0, 200, 150, 0.2);
-      border-radius: 8px; text-align: center; font-size: 0.78rem;
-    }
-    .demo-box span { color: var(--accent); font-family: var(--font-mono); }
   `]
 })
 export class AuthComponent {
