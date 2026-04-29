@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -132,7 +132,11 @@ export class AuthComponent {
   error = '';
   isLoading = false;
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(
+    private router: Router, 
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   async onSubmit() {
     this.error = '';
@@ -174,6 +178,7 @@ export class AuthComponent {
       this.error = err.message || 'An error occurred during authentication.';
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 }
