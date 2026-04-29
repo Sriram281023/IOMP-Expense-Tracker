@@ -34,18 +34,19 @@ export class AuthService {
 
         // Check if the user just arrived from an email confirmation link
         if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
-          const search = window.location.search;
-          const hash = window.location.hash;
-          
-          if (search.includes('code=') || hash.includes('type=signup') || hash.includes('type=recovery') || hash.includes('access_token=')) {
-            // Give the UI a tiny moment to render before blocking with alert
+          // Check if we are awaiting confirmation from a previous signup
+          if (localStorage.getItem('awaiting_confirmation') === 'true') {
+            localStorage.removeItem('awaiting_confirmation');
             setTimeout(() => {
               alert('Email confirmed successfully! You are now logged in.');
               this.router.navigate(['/dashboard']);
             }, 100);
-            
-            // Clean up the URL so refreshing doesn't trigger the alert again
-            window.history.replaceState({}, document.title, window.location.pathname);
+          } else {
+            // Fallback for normal logins or confirmations where localStorage wasn't set
+            // If the user lands on the root or login page and is signed in, redirect them
+            if (this.router.url === '/login' || this.router.url === '/') {
+              this.router.navigate(['/dashboard']);
+            }
           }
         }
       } else {
@@ -82,6 +83,11 @@ export class AuthService {
 
   async register(name: string, email: string, password?: string) {
     if (!password) throw new Error('Password is required');
+    
+    // Set a flag to show the confirmation alert when they return
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('awaiting_confirmation', 'true');
+    }
     
     const { data, error } = await this.supabase.client.auth.signUp({
       email,

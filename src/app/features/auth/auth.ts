@@ -35,6 +35,11 @@ import { AuthService } from '../../core/services/auth.service';
             <input type="password" [(ngModel)]="password" class="form-control" autocomplete="new-password" placeholder="Enter your password">
           </div>
 
+          <div class="form-group" *ngIf="!isLogin">
+            <label>Confirm Password</label>
+            <input type="password" [(ngModel)]="confirmPassword" class="form-control" autocomplete="new-password" placeholder="Confirm your password">
+          </div>
+
           <button (click)="onSubmit()" class="btn btn-primary" style="margin-top: 10px;">
             {{ isLogin ? 'Login' : 'Create Account' }}
           </button>
@@ -114,6 +119,7 @@ export class AuthComponent {
   name = '';
   email = '';
   password = '';
+  confirmPassword = '';
   error = '';
 
   constructor(private router: Router, private authService: AuthService) {}
@@ -128,8 +134,13 @@ export class AuthComponent {
         this.router.navigate(['/dashboard']);
       } else {
         // Signup logic
-        if (!this.name || !this.email || !this.password) {
+        if (!this.name || !this.email || !this.password || !this.confirmPassword) {
           this.error = 'Please fill in all fields.';
+          return;
+        }
+
+        if (this.password !== this.confirmPassword) {
+          this.error = 'Passwords do not match.';
           return;
         }
         
@@ -143,6 +154,7 @@ export class AuthComponent {
           alert('Signup successful! Please check your email to confirm your account, then log in.');
           this.isLogin = true;
           this.password = '';
+          this.confirmPassword = '';
         }
       }
     } catch (err: any) {
