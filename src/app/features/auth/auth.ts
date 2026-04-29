@@ -40,8 +40,9 @@ import { AuthService } from '../../core/services/auth.service';
             <input type="password" [(ngModel)]="confirmPassword" class="form-control" autocomplete="new-password" placeholder="Confirm your password">
           </div>
 
-          <button (click)="onSubmit()" class="btn btn-primary" style="margin-top: 10px;">
-            {{ isLogin ? 'Login' : 'Create Account' }}
+          <button (click)="onSubmit()" class="btn btn-primary" [disabled]="isLoading" style="margin-top: 10px;">
+            <span *ngIf="isLoading" class="spinner"></span>
+            {{ isLoading ? 'Processing...' : (isLogin ? 'Login' : 'Create Account') }}
           </button>
 
           <div class="auth-link">
@@ -112,6 +113,14 @@ import { AuthService } from '../../core/services/auth.service';
       padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.85rem;
     }
     .alert-error { background: var(--danger-dim); border: 1px solid rgba(255,94,120,0.3); color: var(--danger); }
+    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(0,0,0,0.3); border-radius: 50%;
+      border-top-color: #000; animation: spin 1s ease-in-out infinite;
+      margin-right: 8px; vertical-align: middle; margin-top: -2px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   `]
 })
 export class AuthComponent {
@@ -121,11 +130,13 @@ export class AuthComponent {
   password = '';
   confirmPassword = '';
   error = '';
+  isLoading = false;
 
   constructor(private router: Router, private authService: AuthService) {}
 
   async onSubmit() {
     this.error = '';
+    this.isLoading = true;
     
     try {
       if (this.isLogin) {
@@ -136,11 +147,13 @@ export class AuthComponent {
         // Signup logic
         if (!this.name || !this.email || !this.password || !this.confirmPassword) {
           this.error = 'Please fill in all fields.';
+          this.isLoading = false;
           return;
         }
 
         if (this.password !== this.confirmPassword) {
           this.error = 'Passwords do not match.';
+          this.isLoading = false;
           return;
         }
         
@@ -159,6 +172,8 @@ export class AuthComponent {
       }
     } catch (err: any) {
       this.error = err.message || 'An error occurred during authentication.';
+    } finally {
+      this.isLoading = false;
     }
   }
 }
