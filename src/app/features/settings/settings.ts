@@ -133,8 +133,6 @@ import { AuthService } from '../../core/services/auth.service';
     </div>
   `,
   styles: [`
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
     .settings-page {
       padding: 36px 0;
       font-family: 'Inter', 'DM Sans', sans-serif;

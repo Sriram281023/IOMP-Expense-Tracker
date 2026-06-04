@@ -52,7 +52,7 @@ import { AuthService } from '../../core/services/auth.service';
         <!-- User chip -->
         <div class="user-chip" routerLink="/settings">
           <div class="user-avatar">{{ (authService.user()?.name || 'U').charAt(0).toUpperCase() }}</div>
-          <span class="user-name">{{ authService.user()?.name?.split(' ')[0] || 'Account' }}</span>
+          <span class="user-name">{{ (authService.user()?.name || '').split(' ')[0] || 'Account' }}</span>
         </div>
 
         <!-- Logout -->

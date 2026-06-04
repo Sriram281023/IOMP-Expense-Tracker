@@ -17,7 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
         <div>
           <div class="greeting-row">
             <span class="greeting-time">{{ greeting }},</span>
-            <span class="greeting-name">{{ authService.user()?.name?.split(' ')[0] || 'there' }} 👋</span>
+            <span class="greeting-name">{{ (authService.user()?.name || '').split(' ')[0] || 'there' }} 👋</span>
           </div>
           <p class="dash-subtitle">Here's your financial snapshot for {{ currentMonthName }}</p>
         </div>
@@ -151,8 +151,6 @@ import { AuthService } from '../../core/services/auth.service';
     </div>
   `,
   styles: [`
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
     .dash {
       padding: 36px 0;
       font-family: 'Inter', 'DM Sans', sans-serif;
